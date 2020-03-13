@@ -35,6 +35,7 @@ import java.util.Set;
 public final class StorageException extends BaseHttpServiceException {
   private static final String INTERNAL_ERROR = "internalError";
   private static final String CONNECTION_CLOSED_PREMATURELY = "connectionClosedPrematurely";
+  private static final String CONNECTION_SHUTDOWN = "connectionShutdown";
   private static final String CONNECTION_RESET = "connectionReset";
 
   // see: https://cloud.google.com/storage/docs/resumable-uploads-xml#practices
@@ -48,6 +49,7 @@ public final class StorageException extends BaseHttpServiceException {
           new Error(408, null),
           new Error(null, INTERNAL_ERROR),
           new Error(null, CONNECTION_CLOSED_PREMATURELY),
+          new Error(null, CONNECTION_SHUTDOWN),
           new Error(null, CONNECTION_RESET));
 
   private static final long serialVersionUID = -4168430271327813063L;
@@ -86,7 +88,8 @@ public final class StorageException extends BaseHttpServiceException {
   /**
    * Translate IOException to a StorageException representing the cause of the error. This method
    * defaults to idempotent always being {@code true}. Additionally, this method translates
-   * transient issues Connection Closed Prematurely and Connection Reset as retryable errors.
+   * transient issues Connection Closed Prematurely, Connection Shutdown and Connection Reset as
+   * retryable errors.
    *
    * @returns {@code StorageException}
    */
@@ -96,6 +99,8 @@ public final class StorageException extends BaseHttpServiceException {
           0, exception.getMessage(), CONNECTION_CLOSED_PREMATURELY, exception);
     } else if (exception.getMessage().contains("Connection reset")) {
       return new StorageException(0, exception.getMessage(), CONNECTION_RESET, exception);
+    } else if (exception.getMessage().contains("Connection has been shutdown")) {
+      return new StorageException(0, exception.getMessage(), CONNECTION_SHUTDOWN, exception);
     } else {
       // default
       return new StorageException(exception);

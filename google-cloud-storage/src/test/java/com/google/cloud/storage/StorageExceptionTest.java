@@ -161,6 +161,20 @@ public class StorageExceptionTest {
   }
 
   @Test
+  public void testTranslateConnectionShutdown() {
+    StorageException exception =
+        StorageException.translate(
+            new SSLException(
+                "Connection has been shutdown: "
+                    + new SSLException(new SocketException("Socket closed"))));
+    String test = exception.getMessage();
+
+    assertEquals(0, exception.getCode());
+    assertEquals("connectionShutdown", exception.getReason());
+    assertTrue(exception.isRetryable());
+  }
+
+  @Test
   public void testTranslateAndThrow() throws Exception {
     Exception cause = new StorageException(503, "message");
     RetryHelperException exceptionMock = createMock(RetryHelperException.class);
